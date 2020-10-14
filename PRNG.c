@@ -63,7 +63,7 @@ int main() {
     int i;
     char a[32] = "asdfghjkloiuytrewqaszxcdfvbghnmj";
     char* rez = PRNG(108, a);
-    for(i = 0; i < 108; ++i){
+    for(i = 107; i >= 0; --i){
         printf("%02x", (uint8_t)rez[i]);
     }
 
