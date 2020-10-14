@@ -18,6 +18,7 @@ void inc504(char* a){
     }
 }
 
+// t - размер генерируемой последовательности в байтах, К - начальное заполнение (sizeof(K) = 32)
 char* PRNG(unsigned t, char* K){
     t*=8;
     unsigned h = 512, m = 512, s = 256;
