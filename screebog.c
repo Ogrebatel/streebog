@@ -18,6 +18,14 @@ union uint512_t{
     uint8_t b[B_SIZE];
 } typedef uint512_t;
 
+
+union uint256_t{
+    uint64_t qw[4];
+    uint32_t dw[8];
+    uint16_t w[16];
+    uint8_t b[32];
+} typedef uint256_t;
+
 struct streeb_context{
     uint512_t h;
     uint512_t m;
@@ -44,7 +52,7 @@ uint16_t Pi[256] = {252, 238, 221, 17, 207, 110, 49, 22, 251, 196, 250, 218, 35,
                     97, 32, 113, 103, 164, 45, 43, 9, 91, 203, 155, 37, 208, 190, 229, 108, 82, 89, 166,
                     116, 210, 230, 244, 180, 192, 209, 102, 175, 194, 57, 75, 99, 182};
 
-uint16_t t[64] = {0, 8, 16, 24, 32, 40, 48, 56, 1, 9, 17, 25, 33, 41, 49, 57, 2, 10, 18, 26, 34, 42, 50, 58,
+uint16_t tau[64] = {0, 8, 16, 24, 32, 40, 48, 56, 1, 9, 17, 25, 33, 41, 49, 57, 2, 10, 18, 26, 34, 42, 50, 58,
         3, 11, 19, 27, 35, 43, 51, 59, 4, 12, 20, 28, 36, 44, 52, 60, 5, 13, 21, 29, 37, 45, 53, 61, 6, 14,
         22, 30, 38, 46, 54, 62, 7, 15, 23, 31, 39, 47, 55, 63};
 
@@ -81,11 +89,13 @@ uint512_t C[12] = { {0xdd806559f2a64507, 0x05767436cc744d23, 0xa2422a08a460d315,
 
 void print_512 (uint512_t a){
     int i;
-    for(i = 63; i >= 0; --i){
-        printf("%02x", a.b[i]);
+    for(i = 7; i >= 0; --i){
+        printf("%016llx", a.qw[i]);
     }
     printf("\n");
 }
+//258de4c7bcbb8e1ea5a4f4d253096bab9d80861b15fb130fd59ea68917ca3f9cb72fa501b91c3a33e26610b52d4f1e3e66a6bcf415c6458f687ef839
+//b59391a8
 
 uint512_t S(uint512_t a){
     uint512_t res;
@@ -109,7 +119,7 @@ uint512_t P(uint512_t a){
     uint512_t res;
     unsigned i;
     for(i = 0; i < B_SIZE; ++i){
-        res.b[i] = a.b[t[i]];
+        res.b[i] = a.b[tau[i]];
     }
     return res;
 }
@@ -166,19 +176,16 @@ uint512_t sum512(uint512_t a, uint512_t b){
     return res;
 }
 
-void first_stage(bool type, streeb_context* ctx, char* M){
+void first_stage(streeb_context* ctx){
 
     memset(ctx->N.b, 0, 64);
     memset(ctx->sum.b, 0, 64);
     memset(ctx->p_512.b, 0, 64);
-    if (type == GOST_256)
+    if (ctx->type == GOST_256)
         memset(ctx->h.b, 1, 64);
     else
         memset(ctx->h.b, 0, 64);
     ctx->p_512.b[1] = 2;
-    ctx->M = M;
-    ctx->size = strlen(M);
-    ctx->type = type;
 }
 
 
@@ -215,27 +222,95 @@ void third_stage(streeb_context* ctx){
         memset(ctx->h.b, 0, 32);
 }
 
-int main() {
-//    char test[63] = {"012345678901234567890123456789012345678901234567890123456789012"};
-    char test[72] = {0xd1, 0xe5, 0x20, 0xe2, 0xe5, 0xf2, 0xf0,
-                     0xe8, 0x2c, 0x20, 0xd1, 0xf2, 0xf0, 0xe8,
-                     0xe1, 0xee, 0xe6, 0xe8, 0x20, 0xe2, 0xed,
-                     0xf3, 0xf6, 0xe8, 0x2c, 0x20, 0xe2, 0xe5,
-                     0xfe, 0xf2, 0xfa, 0x20, 0xf1, 0x20, 0xec,
-                     0xee, 0xf0, 0xff, 0x20, 0xf1, 0xf2, 0xf0,
-                     0xe5, 0xeb, 0xe0, 0xec, 0xe8, 0x20, 0xed,
-                     0xe0, 0x20, 0xf5, 0xf0, 0xe0, 0xe1, 0xf0,
-                     0xfb, 0xff, 0x20, 0xef, 0xeb, 0xfa, 0xea,
-                     0xfb, 0x20, 0xc8, 0xe3, 0xee, 0xf0, 0xe5,
-                     0xe2, 0xfb};
+void streeb_context_init(streeb_context* ctx, char* M, bool type, unsigned size){
+    ctx->M = M;
+    ctx->size = size;
+    ctx->type = type;
+}
 
-    bool type = GOST_512;
+//---------------PRNG_BLOCK-----------------
+void inc504(char* a){
+    int i;
+    for(i = 0; i < 63; ++i){
+        ++a[i];
+        if (a[i] != 0) break;
+    }
+}
+
+char* PRNG(unsigned t, char* K){
+    t*=8;
+    unsigned h = 512, m = 512, s = 256;
+    unsigned r = t % h, q = t / h;
+    unsigned l = m - s - 8; // = 248
+    // t = q * h + г
+    char* _C = (char*)malloc(64);
+    char* _U = (char*)malloc(63);
+    char* _R = (char*)malloc(t/8);
+    memcpy(_U, K, s/8);
+    memset(_U + 32, 0, 31);
+
+    unsigned i;
+
     streeb_context ctx;
 
-    first_stage(type, &ctx, test);
-    second_stage(&ctx);
-    third_stage(&ctx);
-    print_512(ctx.h);
-    printf("Hello, World!\n");
+    for(i = 0; i < q; ++i){
+        inc504(_U);
+        streeb_context_init(&ctx, _U, GOST_512, 63);
+        first_stage(&ctx);
+        second_stage(&ctx);
+        third_stage(&ctx);
+        memset(_C, 0,64);
+        memcpy(_C, ctx.h.b, 64);
+        memcpy(_R + i*64, _C, 64);
+    }
+
+    if (r != 0){
+        inc504(_R);
+        streeb_context_init(&ctx, _R, GOST_512, 63);
+        first_stage(&ctx);
+        second_stage(&ctx);
+        third_stage(&ctx);
+        memset(_C, 0,64);
+        memcpy(_C, ctx.h.b, 64);
+//        for(i = 0; i < 64; ++i){
+//            printf("%02x %02x\n", ctx.h.b[i],(uint8_t)_C[i]);
+//        }
+
+        memcpy(_R + i*64, _C, r / 8);
+    }
+    return _R;
+}
+//----------------------------------------------
+int main() {
+    int i;
+    char a[32] = "asdfghjkloiuytrewqaszxcdfvbghnmj";
+    char* rez = PRNG(108, a);
+    for(i = 0; i < 108; ++i){
+        printf("%02x", (uint8_t)rez[i]);
+    }
+    
+//----------------------------------------------------------------------------------
+// char test[63] = {"012345678901234567890123456789012345678901234567890123456789012"};
+//    char test[72] = {0xd1, 0xe5, 0x20, 0xe2, 0xe5, 0xf2, 0xf0,
+//                     0xe8, 0x2c, 0x20, 0xd1, 0xf2, 0xf0, 0xe8,
+//                     0xe1, 0xee, 0xe6, 0xe8, 0x20, 0xe2, 0xed,
+//                     0xf3, 0xf6, 0xe8, 0x2c, 0x20, 0xe2, 0xe5,
+//                     0xfe, 0xf2, 0xfa, 0x20, 0xf1, 0x20, 0xec,
+//                     0xee, 0xf0, 0xff, 0x20, 0xf1, 0xf2, 0xf0,
+//                     0xe5, 0xeb, 0xe0, 0xec, 0xe8, 0x20, 0xed,
+//                     0xe0, 0x20, 0xf5, 0xf0, 0xe0, 0xe1, 0xf0,
+//                     0xfb, 0xff, 0x20, 0xef, 0xeb, 0xfa, 0xea,
+//                     0xfb, 0x20, 0xc8, 0xe3, 0xee, 0xf0, 0xe5,
+//                     0xe2, 0xfb};
+//    bool type = GOST_512;
+//
+//    streeb_context ctx;
+//    streeb_context_init(&ctx, test, GOST_512, 72);
+//    first_stage(&ctx);
+//    second_stage(&ctx);
+//    third_stage(&ctx);
+//    print_512(ctx.h);
     return 0;
 }
+
+
