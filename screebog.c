@@ -247,7 +247,7 @@ char* PRNG(unsigned t, char* K){
     char* _U = (char*)malloc(63);
     char* _R = (char*)malloc(t/8);
     memcpy(_U, K, s/8);
-    memset(_U + 32, 0, 31);
+    memset(_U + s/8, 0, l/8);
 
     unsigned i;
 
@@ -288,7 +288,7 @@ int main() {
     for(i = 0; i < 108; ++i){
         printf("%02x", (uint8_t)rez[i]);
     }
-    
+
 //----------------------------------------------------------------------------------
 // char test[63] = {"012345678901234567890123456789012345678901234567890123456789012"};
 //    char test[72] = {0xd1, 0xe5, 0x20, 0xe2, 0xe5, 0xf2, 0xf0,
@@ -312,5 +312,7 @@ int main() {
 //    print_512(ctx.h);
     return 0;
 }
+
+
 
 
