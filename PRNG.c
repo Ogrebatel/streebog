@@ -37,7 +37,8 @@ char* PRNG(unsigned t, char* K){
 
     for(i = 0; i < q; ++i){
         inc504(_U);
-        streeb_context_init(&ctx, _U, GOST_512, 63);
+        streeb_context_init(&ctx, _U, GOST_512, 63); // ctx - контекст, в который помещаются:
+        // _U - указатель на строку, которую нужно хэшировать, type = GOST_512 - тип хэширования, size = 63 - размер юлока
         first_stage(&ctx);
         second_stage(&ctx);
         third_stage(&ctx);
