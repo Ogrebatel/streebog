@@ -56,6 +56,8 @@ char* PRNG(unsigned t, char* K){
 
         memcpy(_R + i*64, _C, r / 8);
     }
+    free(_C);
+    free(_U);
     return _R;
 }
 //----------------------------------------------
