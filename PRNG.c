@@ -41,7 +41,7 @@ char* PRNG(unsigned t, char* K){
         // _U - указатель на строку, которую нужно хэшировать, type = GOST_512 - тип хэширования, size = 63 - размер юлока
         first_stage(&ctx);
         second_stage(&ctx);
-        third_stage(&ctx);
+        third_stage(&ctx); // результат в ctx.h
         memset(_C, 0,64);
         memcpy(_C, ctx.h.b, 64);
         memcpy(_R + i*64, _C, 64);
