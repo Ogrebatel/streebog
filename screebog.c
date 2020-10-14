@@ -53,8 +53,8 @@ uint16_t Pi[256] = {252, 238, 221, 17, 207, 110, 49, 22, 251, 196, 250, 218, 35,
                     116, 210, 230, 244, 180, 192, 209, 102, 175, 194, 57, 75, 99, 182};
 
 uint16_t tau[64] = {0, 8, 16, 24, 32, 40, 48, 56, 1, 9, 17, 25, 33, 41, 49, 57, 2, 10, 18, 26, 34, 42, 50, 58,
-        3, 11, 19, 27, 35, 43, 51, 59, 4, 12, 20, 28, 36, 44, 52, 60, 5, 13, 21, 29, 37, 45, 53, 61, 6, 14,
-        22, 30, 38, 46, 54, 62, 7, 15, 23, 31, 39, 47, 55, 63};
+                    3, 11, 19, 27, 35, 43, 51, 59, 4, 12, 20, 28, 36, 44, 52, 60, 5, 13, 21, 29, 37, 45, 53, 61, 6, 14,
+                    22, 30, 38, 46, 54, 62, 7, 15, 23, 31, 39, 47, 55, 63};
 
 uint64_t A[64] = {  0x8e20faa72ba0b470, 0x47107ddd9b505a38, 0xad08b0e0c3282d1c, 0xd8045870ef14980e,
                     0x6c022c38f90a4c07, 0x3601161cf205268d, 0x1b8e0b0e798c13c8, 0x83478b07b2468764,
@@ -228,69 +228,9 @@ void streeb_context_init(streeb_context* ctx, char* M, bool type, unsigned size)
     ctx->type = type;
 }
 
-//---------------PRNG_BLOCK-----------------
-void inc504(char* a){
-    int i;
-    for(i = 0; i < 63; ++i){
-        ++a[i];
-        if (a[i] != 0) break;
-    }
-}
-
-char* PRNG(unsigned t, char* K){
-    t*=8;
-    unsigned h = 512, m = 512, s = 256;
-    unsigned r = t % h, q = t / h;
-    unsigned l = m - s - 8; // = 248
-    // t = q * h + г
-    char* _C = (char*)malloc(64);
-    char* _U = (char*)malloc(63);
-    char* _R = (char*)malloc(t/8);
-    memcpy(_U, K, s/8);
-    memset(_U + s/8, 0, l/8);
-
-    unsigned i;
-
-    streeb_context ctx;
-
-    for(i = 0; i < q; ++i){
-        inc504(_U);
-        streeb_context_init(&ctx, _U, GOST_512, 63);
-        first_stage(&ctx);
-        second_stage(&ctx);
-        third_stage(&ctx);
-        memset(_C, 0,64);
-        memcpy(_C, ctx.h.b, 64);
-        memcpy(_R + i*64, _C, 64);
-    }
-
-    if (r != 0){
-        inc504(_R);
-        streeb_context_init(&ctx, _R, GOST_512, 63);
-        first_stage(&ctx);
-        second_stage(&ctx);
-        third_stage(&ctx);
-        memset(_C, 0,64);
-        memcpy(_C, ctx.h.b, 64);
-//        for(i = 0; i < 64; ++i){
-//            printf("%02x %02x\n", ctx.h.b[i],(uint8_t)_C[i]);
-//        }
-
-        memcpy(_R + i*64, _C, r / 8);
-    }
-    return _R;
-}
-//----------------------------------------------
-int main() {
-    int i;
-    char a[32] = "asdfghjkloiuytrewqaszxcdfvbghnmj";
-    char* rez = PRNG(108, a);
-    for(i = 0; i < 108; ++i){
-        printf("%02x", (uint8_t)rez[i]);
-    }
-
-//----------------------------------------------------------------------------------
-// char test[63] = {"012345678901234567890123456789012345678901234567890123456789012"};
+//int main() {
+//
+////    char test[63] = {"012345678901234567890123456789012345678901234567890123456789012"};
 //    char test[72] = {0xd1, 0xe5, 0x20, 0xe2, 0xe5, 0xf2, 0xf0,
 //                     0xe8, 0x2c, 0x20, 0xd1, 0xf2, 0xf0, 0xe8,
 //                     0xe1, 0xee, 0xe6, 0xe8, 0x20, 0xe2, 0xed,
@@ -310,8 +250,10 @@ int main() {
 //    second_stage(&ctx);
 //    third_stage(&ctx);
 //    print_512(ctx.h);
-    return 0;
-}
+//    return 0;
+//}
+
+
 
 
 
