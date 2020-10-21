@@ -1,6 +1,6 @@
 #include "TK26.h"
 
-void inc504(char* a){
+void inc504(unsigned char* a){
     int i;
     for(i = 0; i < 63; ++i){
         ++a[i];
