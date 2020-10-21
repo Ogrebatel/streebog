@@ -56,8 +56,6 @@ void print_512 (uint512_t a){
     }
     printf("\n");
 }
-//258de4c7bcbb8e1ea5a4f4d253096bab9d80861b15fb130fd59ea68917ca3f9cb72fa501b91c3a33e26610b52d4f1e3e66a6bcf415c6458f687ef839
-//b59391a8
 
 uint512_t S(uint512_t a){
     uint512_t res;
