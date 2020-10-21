@@ -31,10 +31,9 @@ int main() {
 //                     0xfb, 0x20, 0xc8, 0xe3, 0xee, 0xf0, 0xe5,
 //                     0xe2, 0xfb};
 
-//    hash512(rez, test, GOST_512, 63);
-//    uint512_t rez_to_output;
-//    memcpy(rez_to_output.b, rez, 64);
-//    print_512(rez_to_output);
+//     uint512_t rez;
+//     hash512(rez.b, test, GOST_512, 63);
+//     print_512(rez);
 
     return 0;
 }
