@@ -1,41 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-
-#define QW_SIZE 8
-#define DW_SIZE 16
-#define W_SIZE 32
-#define B_SIZE 64
-#define bool char
-#define GOST_256 0
-#define GOST_512 1
-
-union uint512_t{
-    uint64_t qw[QW_SIZE];
-    uint32_t dw[DW_SIZE];
-    uint16_t w[W_SIZE];
-    uint8_t b[B_SIZE];
-} typedef uint512_t;
-
-
-union uint256_t{
-    uint64_t qw[4];
-    uint32_t dw[8];
-    uint16_t w[16];
-    uint8_t b[32];
-} typedef uint256_t;
-
-struct streeb_context{
-    uint512_t h;
-    uint512_t m;
-    uint512_t N;
-    uint512_t sum;
-    char* M;
-    uint512_t p_512;
-    uint64_t size;
-    bool type;
-} typedef streeb_context;
+#include "streebog.h"
 
 uint16_t Pi[256] = {252, 238, 221, 17, 207, 110, 49, 22, 251, 196, 250, 218, 35, 197, 4, 77, 233,
                     119, 240, 219, 147, 46, 153, 186, 23, 54, 241, 187, 20, 205, 95, 193, 249, 24, 101,
@@ -85,7 +48,6 @@ uint512_t C[12] = { {0xdd806559f2a64507, 0x05767436cc744d23, 0xa2422a08a460d315,
                     {0x74b4c7fb98459ced, 0x3698fad1153bb6c3, 0x7a1e6c303b7652f4, 0x9fe76702af69334b, 0x1fffe18a1b336103,0x8941e71cff8a78db, 0x382ae548b2e4f3f3,0xabbedea680056f52},
                     {0x6bcaa4cd81f32d1b, 0xdea2594ac06fd85d, 0xefbacd1d7d476e98, 0x8a1d71efea48b9ca, 0x2001802114846679,0xd8fa6bbbebab0761, 0x3002c6cd635afe94,0x7bcd9ed0efc889fb},
                     {0x48bc924af11bd720, 0xfaf417d5d9b21b99, 0xe71da4aa88e12852, 0x5d80ef9d1891cc86, 0xf82012d430219f9b,0xcda43c32bcdf1d77, 0xd21380b00449b17a,0x378ee767f11631ba}};
-
 
 void print_512 (uint512_t a){
     int i;
@@ -228,33 +190,16 @@ void streeb_context_init(streeb_context* ctx, char* M, bool type, unsigned size)
     ctx->type = type;
 }
 
-//int main() {
-//
-////    char test[63] = {"012345678901234567890123456789012345678901234567890123456789012"};
-//    char test[72] = {0xd1, 0xe5, 0x20, 0xe2, 0xe5, 0xf2, 0xf0,
-//                     0xe8, 0x2c, 0x20, 0xd1, 0xf2, 0xf0, 0xe8,
-//                     0xe1, 0xee, 0xe6, 0xe8, 0x20, 0xe2, 0xed,
-//                     0xf3, 0xf6, 0xe8, 0x2c, 0x20, 0xe2, 0xe5,
-//                     0xfe, 0xf2, 0xfa, 0x20, 0xf1, 0x20, 0xec,
-//                     0xee, 0xf0, 0xff, 0x20, 0xf1, 0xf2, 0xf0,
-//                     0xe5, 0xeb, 0xe0, 0xec, 0xe8, 0x20, 0xed,
-//                     0xe0, 0x20, 0xf5, 0xf0, 0xe0, 0xe1, 0xf0,
-//                     0xfb, 0xff, 0x20, 0xef, 0xeb, 0xfa, 0xea,
-//                     0xfb, 0x20, 0xc8, 0xe3, 0xee, 0xf0, 0xe5,
-//                     0xe2, 0xfb};
-//    bool type = GOST_512;
-//
-//    streeb_context ctx;
-//    streeb_context_init(&ctx, test, GOST_512, 72);
-//    first_stage(&ctx);
-//    second_stage(&ctx);
-//    third_stage(&ctx);
-//    print_512(ctx.h);
-//    return 0;
-//}
-
-
-
-
-
-
+void hash512(char* rez, char* M, bool type, unsigned size){
+    if (!rez) return;
+    if (!M) return;
+    streeb_context ctx;
+    streeb_context_init(&ctx, M, type, size);
+    first_stage(&ctx);
+    second_stage(&ctx);
+    third_stage(&ctx);
+    if (type == GOST_512)
+        memcpy(rez, ctx.h.b, 64);
+    else
+        memcpy(rez, ctx.h.b + 32, 32);
+}
